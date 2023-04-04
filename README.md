@@ -1,72 +1,68 @@
-## demo app - developing with Docker
+## Persist data with docker compose 
 
-This demo app shows a simple user profile app set up using 
-- index.html with pure js and css styles
-- nodejs backend with express module
-- mongodb for data storage
+### Persist data of a MongoDB container by attaching a Docker volume to it.
 
-All components are docker-based
+### Technologies used:
+Docker, Node.js, MongoDB
 
-### With Docker
 
-#### To start the application
+### Below are the steps for persisting data of a MongoDB container by attaching a Docker volume to it in a Docker Compose YAML file:
 
-Step 1: Create docker network
+Step 1: Create a new file named docker-compose.yaml in a directory where you want to store the MongoDB data.
 
-    docker network create mongo-network 
+Step 2: Add the following content to the docker-compose.yaml file:
 
-Step 2: start mongodb 
+        version: '3'
+    services:
+      # my-app:
+        # image: ${docker-registry}/my-app:1.0
+        # ports:
+         # - 3000:3000
+      mongodb:
+        image: mongo
+        ports:
+         - 27017:27017
+        environment:
+         - MONGO_INITDB_ROOT_USERNAME=admin
+         - MONGO_INITDB_ROOT_PASSWORD=password
+        volumes:
+         - mongo-data:/data/db
+      mongo-express:
+        image: mongo-express
+        restart: always
+        ports:
+         - 8080:8081
+        environment:
+         - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+         - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+         - ME_CONFIG_MONGODB_SERVER=mongodb
+        depends_on:
+         - "mongodb"
+    volumes:
+      mongo-data:
+        driver: local
+        
+Note: This YAML file defines a Docker Compose service named mongodb, which uses the official mongo image from Docker Hub. The volumes section attaches a volume named my_mongo_data to the container at the path /data/db. The ports section maps the container port 27017 to the host port 27017.
+             
+Step 3: Save the docker-compose.yaml file.
 
-    docker run -d -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=password --name mongodb --net mongo-network mongo    
+Step 4: Start the MongoDB container using the following command:
 
-Step 3: start mongo-express
+    docker compose -f docker-compose.yaml
     
-    docker run -d -p 8081:8081 -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin -e ME_CONFIG_MONGODB_ADMINPASSWORD=password --net mongo-network --name mongo-express -e ME_CONFIG_MONGODB_SERVER=mongodb mongo-express   
-
-_NOTE: creating docker-network in optional. You can start both containers in a default network. In this case, just emit `--net` flag in `docker run` command_
-
-Step 4: open mongo-express from browser
-
-    http://localhost:8081
-
-Step 5: create `user-account` _db_ and `users` _collection_ in mongo-express
-
-Step 6: Start your nodejs application locally - go to `app` directory of project 
-
-    cd app
-    npm install 
-    node server.js
+Note: This command starts the MongoDB container in the background and attaches the volume my_mongo_data to it.
     
-Step 7: Access you nodejs application UI from browser
+Step 5: Verify that the container is running by running the following command:
 
-    http://localhost:3000
-
-### With Docker Compose
-
-#### To start the application
-
-Step 1: start mongodb and mongo-express
-
-    docker-compose -f docker-compose.yaml up
+    docker ps
     
-_You can access the mongo-express under localhost:8080 from your browser_
+Step 6: Connect to the MongoDB container using a MongoDB client tool such as Robo 3T or Mongo Shell to create databases and collections.
+
+Step 7: Stop the container using the following command:
+
+    docker compose -f docker-compose.yaml
     
-Step 2: in mongo-express UI - create a new database "my-db"
+Step 8: This command stops and removes the container, but the volume attached to it remains intact.
 
-Step 3: in mongo-express UI - create a new collection "users" in the database "my-db"       
-    
-Step 4: start node server 
-
-    cd app
-    npm install
-    node server.js
-    
-Step 5: access the nodejs application from browser 
-
-    http://localhost:3000
-
-#### To build a docker image from the application
-
-    docker build -t my-app:1.0 .       
-    
-The dot "." at the end of the command denotes location of the Dockerfile.
+By using a Docker Compose YAML file to start the MongoDB container, you can easily manage the container and its dependencies. The volume definition in the YAML file allows you to persist the data stored in the container even if the container is stopped or deleted.
+   
